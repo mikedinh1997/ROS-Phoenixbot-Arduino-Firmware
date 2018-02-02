@@ -10,8 +10,8 @@
 
 //steppers 2-6, drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
-const char* solenoid[] = {8,9,10};
-const char digital[30]; //todo: find out which DIO are free
+const char solenoid[] = {8,9,10};
+//const char digital[30]; //todo: find out which DIO are free
 
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
@@ -29,7 +29,7 @@ void setup()
   
   for(char i = 0; i < 30; i++)
   {
-    pinMode(digital[i], INPUT);
+  //  pinMode(digital[i], INPUT);
   }
 
   pinMode(solenoid[0], OUTPUT);
@@ -133,6 +133,7 @@ void loop()
                 {
                   Serial.println("Error with motor input");
                 }
+                Serial.read(); //read out \r
                 break;
             default:
                 Serial.println("error");
