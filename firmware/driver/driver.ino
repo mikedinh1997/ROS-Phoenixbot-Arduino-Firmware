@@ -17,7 +17,8 @@ const char solenoid[] = {8,9,10};
 const char encoder[4] = {18,19,20,21};
 
 char buffer[16];
-
+volatile long encoder1Count = 0;
+volatile long encoder2Count = 0;
 Servo leftMotor;
 Servo rightMotor;
 
@@ -36,10 +37,10 @@ void setup()
   pinMode(solenoid[1], OUTPUT);
   pinMode(solenoid[2], OUTPUT);
 
-  attachInterrupt(5, encoder1_ISR, CHANGE);
-  attachInterrupt(4, encoder1_ISR, CHANGE);
-  attachInterrupt(3, encoder2_ISR, CHANGE);
-  attachInterrupt(2, encoder2_ISR, CHANGE);
+  attachInterrupt(5, encoder1A_ISR, CHANGE);
+  attachInterrupt(4, encoder1B_ISR, CHANGE);
+  attachInterrupt(3, encoder2A_ISR, CHANGE);
+  attachInterrupt(2, encoder2B_ISR, CHANGE);
 
   leftMotor.attach(4);
   rightMotor.attach(5);
@@ -94,6 +95,11 @@ void loop()
             //enccoder
             case 'E':
             case 'e':
+               Serial.print("Encoder 1: ");
+               Serial.println(encoder1Count);
+               Serial.print("Encoder 2: ");
+               Serial.println(encoder2Count);
+               Serial.read(); // eats the char return /r 
                 break;
 
             //solenoid
@@ -133,21 +139,118 @@ void loop()
                 {
                   Serial.println("Error with motor input");
                 }
-                Serial.read(); //read out \r
+                Serial.read(); //Read out extra \r
                 break;
             default:
-                Serial.println("error");
+                Serial.println("Error, serial input incorrect  ");
         }
     }
 }
 
-void encoder1_ISR()
+void encoder1A_ISR()
 {
+  if(digitalRead(encoder[0] == HIGH))
+  {
+    if(digitalRead(encoder[1] == LOW))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
+  else
+  {
+    if(digitalRead(encoder[1] == HIGH))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
   
 }
 
-void encoder2_ISR()
+void encoder1B_ISR()
 {
+  if(digitalRead(encoder[1] == HIGH))
+  {
+    if(digitalRead(encoder[0] == HIGH))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
+  else
+  {
+    if(digitalRead(encoder[1] == LOW))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
+    
+}
+
+void encoder2A_ISR()
+{
+   if(digitalRead(encoder[2] == HIGH))
+  {
+    if(digitalRead(encoder[3] == LOW))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
+  else
+  {
+    if(digitalRead(encoder[3] == HIGH))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  } 
+}
+
+void encoder2B_ISR()
+{
+  if(digitalRead(encoder[3] == HIGH))
+  {
+    if(digitalRead(encoder[2] == HIGH))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
+  else
+  {
+    if(digitalRead(encoder[3] == LOW))
+    {
+      encoder1Count++;
+    }
+    else
+    {
+      encoder1Count--;
+    }
+  }
     
 }
 
