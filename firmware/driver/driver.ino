@@ -22,12 +22,12 @@ volatile long encoder2Count = 0;
 Servo leftMotor;
 Servo rightMotor;
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
   delay(10);
   Serial.println("Beep boop, I am a robot.");
-  
+
   for(char i = 0; i < 30; i++)
   {
   //  pinMode(digital[i], INPUT);
@@ -46,7 +46,7 @@ void setup()
   rightMotor.attach(5);
 }
 
-void loop() 
+void loop()
 {
     char command;
 
@@ -69,9 +69,9 @@ void loop()
             case 'P':
             case 'p':
               //while(Serial.available() <= 0);
-              
+
               //Serial.readBytesUntil(' ', buffer, 16);
-              
+
               //id = atoi(buffer);
               id = (int)Serial.parseInt();
               Serial.println(id);
@@ -79,14 +79,14 @@ void loop()
              // buffer_Flush(buffer, 16);
 
               //while(Serial.available() <= 0);
-              
+
               //Serial.readBytesUntil('\r',buffer,16);
               value = (int)Serial.parseInt();
               //value = atoi(buffer);
               Serial.println(value);
 
               //buffer_Flush(buffer, 16);
-              
+
               analogWrite(pwm[id], value);
               //Serial.flush();
               Serial.read(); //Read out extra \r
@@ -99,7 +99,7 @@ void loop()
                Serial.println(encoder1Count);
                Serial.print("Encoder 2: ");
                Serial.println(encoder2Count);
-               Serial.read(); // eats the char return /r 
+               Serial.read(); // eats the char return /r
                 break;
 
             //solenoid
@@ -115,14 +115,14 @@ void loop()
             //motor
             case 'M':
             case 'm':
-                
+
               while(Serial.available() <= 0);
                motor = Serial.read();
-               //Serial.print("motor: "); 
+               //Serial.print("motor: ");
                //Serial.println(Serial.read());
                 speed = (int)Serial.parseInt();
 
-                Serial.print("motor: "); 
+                Serial.print("motor: ");
                 Serial.println(motor);
                 Serial.println("speed: ");
                 Serial.println(speed);
@@ -171,7 +171,7 @@ void encoder1A_ISR()
       encoder1Count--;
     }
   }
-  
+
 }
 
 void encoder1B_ISR()
@@ -189,7 +189,7 @@ void encoder1B_ISR()
   }
   else
   {
-    if(digitalRead(encoder[1] == LOW))
+    if(digitalRead(encoder[0] == LOW))
     {
       encoder1Count++;
     }
@@ -198,7 +198,7 @@ void encoder1B_ISR()
       encoder1Count--;
     }
   }
-    
+
 }
 
 void encoder2A_ISR()
@@ -207,24 +207,24 @@ void encoder2A_ISR()
   {
     if(digitalRead(encoder[3] == LOW))
     {
-      encoder1Count++;
+      encoder2Count++;
     }
     else
     {
-      encoder1Count--;
+      encoder2Count--;
     }
   }
   else
   {
     if(digitalRead(encoder[3] == HIGH))
     {
-      encoder1Count++;
+      encoder2Count++;
     }
     else
     {
-      encoder1Count--;
+      encoder2Count--;
     }
-  } 
+  }
 }
 
 void encoder2B_ISR()
@@ -233,25 +233,25 @@ void encoder2B_ISR()
   {
     if(digitalRead(encoder[2] == HIGH))
     {
-      encoder1Count++;
+      encoder2Count++;
     }
     else
     {
-      encoder1Count--;
+      encoder2Count--;
     }
   }
   else
   {
-    if(digitalRead(encoder[3] == LOW))
+    if(digitalRead(encoder[2] == LOW))
     {
-      encoder1Count++;
+      encoder2Count++;
     }
     else
     {
-      encoder1Count--;
+      encoder2Count--;
     }
   }
-    
+
 }
 
 void buffer_Flush(char *ptr, int length)
@@ -261,5 +261,3 @@ void buffer_Flush(char *ptr, int length)
     ptr[i] = 0;
   }
 }
-
-
