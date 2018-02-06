@@ -14,7 +14,7 @@ const char solenoid[] = {8,9,10};
 //const char digital[30]; //todo: find out which DIO are free
 
 //A1,B1,A2,B2
-const char encoder[4] = {18,19,20,21};
+const char encoder[4] = {18,19,2,3};
 
 char buffer[16];
 volatile long encoder1Count = 0;
@@ -37,10 +37,10 @@ void setup()
   pinMode(solenoid[1], OUTPUT);
   pinMode(solenoid[2], OUTPUT);
 
-  attachInterrupt(5, encoder1A_ISR, CHANGE);
-  attachInterrupt(4, encoder1B_ISR, CHANGE);
-  attachInterrupt(3, encoder2A_ISR, CHANGE);
-  attachInterrupt(2, encoder2B_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder[0]), encoder1A_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder[1]), encoder1B_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder[2]), encoder2A_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder[3]), encoder2B_ISR, CHANGE);
 
   leftMotor.attach(4);
   rightMotor.attach(5);
@@ -149,63 +149,74 @@ void loop()
 
 void encoder1A_ISR()
 {
-  if(digitalRead(encoder[0] == HIGH))
+  noInterrupts();
+  if(digitalRead(encoder[0]) == HIGH)
   {
-    if(digitalRead(encoder[1] == LOW))
+    if(digitalRead(encoder[1]) == LOW)
     {
       encoder1Count++;
+      //Serial.println("cw");
     }
     else
     {
       encoder1Count--;
+      //Serial.println("ccw");
     }
   }
   else
   {
-    if(digitalRead(encoder[1] == HIGH))
+    if(digitalRead(encoder[1]) == HIGH)
     {
       encoder1Count++;
+      //Serial.println("cw");
     }
     else
     {
       encoder1Count--;
+      //Serial.println("ccw");
     }
   }
-
+  interrupts();
 }
 
 void encoder1B_ISR()
 {
-  if(digitalRead(encoder[1] == HIGH))
+  noInterrupts();
+  if(digitalRead(encoder[1]) == HIGH)
   {
-    if(digitalRead(encoder[0] == HIGH))
+    if(digitalRead(encoder[0]) == HIGH)
     {
       encoder1Count++;
+      //Serial.println("cw");
     }
     else
     {
       encoder1Count--;
+    //Serial.println("ccw");
     }
   }
   else
   {
-    if(digitalRead(encoder[0] == LOW))
+    if(digitalRead(encoder[0]) == LOW)
     {
       encoder1Count++;
+      //Serial.println("cw");
     }
     else
     {
       encoder1Count--;
+      //Serial.println("ccw");
     }
   }
-
+  interrupts();
 }
 
 void encoder2A_ISR()
 {
-   if(digitalRead(encoder[2] == HIGH))
+  noInterrupts();
+   if(digitalRead(encoder[2]) == HIGH)
   {
-    if(digitalRead(encoder[3] == LOW))
+    if(digitalRead(encoder[3]) == LOW)
     {
       encoder2Count++;
     }
@@ -216,7 +227,7 @@ void encoder2A_ISR()
   }
   else
   {
-    if(digitalRead(encoder[3] == HIGH))
+    if(digitalRead(encoder[3]) == HIGH)
     {
       encoder2Count++;
     }
@@ -225,13 +236,15 @@ void encoder2A_ISR()
       encoder2Count--;
     }
   }
+  interrupts();
 }
 
 void encoder2B_ISR()
 {
-  if(digitalRead(encoder[3] == HIGH))
+  noInterrupts();
+  if(digitalRead(encoder[3]) == HIGH)
   {
-    if(digitalRead(encoder[2] == HIGH))
+    if(digitalRead(encoder[2]) == HIGH)
     {
       encoder2Count++;
     }
@@ -242,7 +255,7 @@ void encoder2B_ISR()
   }
   else
   {
-    if(digitalRead(encoder[2] == LOW))
+    if(digitalRead(encoder[2]) == LOW)
     {
       encoder2Count++;
     }
@@ -251,7 +264,7 @@ void encoder2B_ISR()
       encoder2Count--;
     }
   }
-
+  interrupts();
 }
 
 void buffer_Flush(char *ptr, int length)
