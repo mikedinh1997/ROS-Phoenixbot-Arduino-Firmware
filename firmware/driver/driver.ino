@@ -14,11 +14,11 @@ const char solenoid[] = {8,9,10};
 //const char digital[30]; //todo: find out which DIO are free
 
 //A1,B1,A2,B2
-const char encoder[4] = {18,19,2,3};
+const char encoder[4] = {18,19,20,21};
 
-char buffer[16];
-volatile long encoder1Count = 0;
-volatile long encoder2Count = 0;
+char buffer[5];
+volatile uint64_t encoder1Count = 0;
+volatile uint64_t encoder2Count = 0;
 Servo leftMotor;
 Servo rightMotor;
 
@@ -96,10 +96,11 @@ void loop()
             case 'E':
             case 'e':
                Serial.print("Encoder 1: ");
-               Serial.println(encoder1Count);
+               Serial.println((long int)encoder1Count);
                Serial.print("Encoder 2: ");
-               Serial.println(encoder2Count);
+               Serial.println((long int)encoder2Count);
                Serial.read(); // eats the char return /r
+               //TODO: itoa(encoder1Count,buffer,10);
                 break;
 
             //solenoid
