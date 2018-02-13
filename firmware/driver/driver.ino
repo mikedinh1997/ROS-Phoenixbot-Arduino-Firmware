@@ -1,5 +1,6 @@
 #include <Servo.h>
 #define ZEROPOINT 1500
+#define DT 10 //milliseconds
 /*
  * STEP <id> <steps> <step_rate>
  * PWM <id> <value>
@@ -21,6 +22,12 @@ volatile uint64_t encoder1Count = 0;
 volatile uint64_t encoder2Count = 0;
 Servo leftMotor;
 Servo rightMotor;
+float kp[] = {0.01,0.01};
+float ki[] = {0,0};
+float kd[] = {0,0};
+int prv[] = {0,0};
+int throttle[] = {0,0};
+float ierr[] = {0,0};
 
 void setup()
 {
@@ -146,6 +153,8 @@ void loop()
                 Serial.println("Error, serial input incorrect  ");
         }
     }
+    //TODO: Set up timer to interrupt every 10ms and determine velocity. Alternatively we can do this through the PID loop 
+    pid();
 }
 
 void encoder1A_ISR()
@@ -275,3 +284,32 @@ void buffer_Flush(char *ptr, int length)
     ptr[i] = 0;
   }
 }
+
+void pid() //TODO: set this up in a for loop and replace encodercount with an array
+{
+  float p,i,d,err;
+  int term;
+  
+  err = encoder1Count;
+  delay(DT);
+  err -= encoder1Count*(-1);
+  err /= DT;
+
+  ierr[0] += err;
+  throttle[0] += kp[0] * err + ki[0]*ierr[0] + kd[0]*((err - prv[0])/DT);
+  prv[0] = err;
+  Serial.println(throttle[0]);
+  
+  //end PID for encoder 1; begin PID for encoder 2
+
+  err = encoder2Count;
+  delay(DT);
+  err -= encoder2Count*(-1);
+  err /= DT;
+
+  ierr[1] += err;
+  throttle[1] += kp[1] * err + ki[1]*ierr[1] + kd[1]*((err - prv[1])/DT);
+  prv[1] = err;
+}
+
+
