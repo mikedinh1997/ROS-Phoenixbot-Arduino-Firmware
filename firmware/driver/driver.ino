@@ -8,20 +8,26 @@
  * SOLENOID <id> <value>
  * DIGITAL <id>
  */
-
+ uint32_t runTime = 0;
+float err[] = {0,0};
+float sp[] = {0,0}; ///PID Set Point/////
+char pid_flag[] = {0,0};
+uint32_t pid_time[] = {0,0};
 //steppers 2-6, drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
-const char solenoid[] = {8,9,10};
+const char solenoid[] = {23,25,27,29,31,33};
+Servo servos[6];
 //const char digital[30]; //todo: find out which DIO are free
 
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
 
 char buffer[5];
-volatile uint64_t encoder1Count = 0;
-volatile uint64_t encoder2Count = 0;
-Servo leftMotor;
-Servo rightMotor;
+volatile int64_t encoderCounts[] = {0,0};
+
+//Servo leftMotor;
+//Servo rightMotor;
+
 float kp[] = {0.01,0.01};
 float ki[] = {0,0};
 float kd[] = {0,0};
@@ -49,8 +55,11 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(encoder[2]), encoder2A_ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoder[3]), encoder2B_ISR, CHANGE);
 
-  leftMotor.attach(4);
-  rightMotor.attach(5);
+  for(int i = 13; i > 6; i--)
+  {
+    servos[13-i].attach(i);
+  
+  }
 }
 
 void loop()
@@ -64,6 +73,12 @@ void loop()
         int id;
         int value;
         char motor = 0;
+        char pickSolenoid = 0;
+        char solenoidState = 0;
+        char pidMotor = 0;
+        char pidInput = 0;
+        char pidValue = 0;
+        
         int speed;
         switch(command)
         {
@@ -71,7 +86,37 @@ void loop()
            case 'T':
             case 't':
                 break;
+           case 'C':
+           case 'c':
+           while(Serial.available() <= 0);
+            pidMotor = Serial.parseInt();
+            Serial.read();
+            pidInput = Serial.read();   
+            pidValue = (pidInput == 's' || pidInput == 'S') ? Serial.parseFloat() :Serial.parseInt();
 
+            if(pidInput == 'p' || pidInput == 'P')
+            {
+               kp[pidMotor] = pidValue;
+              
+            }else if(pidInput == 'D' || pidInput == 'd')
+            {
+              kd[pidMotor] = pidValue;  
+              
+            }else if(pidInput == 'I' || pidInput == 'i')
+            {
+               ki[pidMotor] = pidValue;
+              
+            }else if(pidInput == 'S' || pidInput == 's')
+            {
+                sp[pidMotor] =  pidValue;
+            }
+            
+
+
+            Serial.read();
+           
+           break; 
+           
             //pwm
             case 'P':
             case 'p':
@@ -102,17 +147,48 @@ void loop()
             //enccoder
             case 'E':
             case 'e':
-               Serial.print("Encoder 1: ");
-               Serial.println((long int)encoder1Count);
-               Serial.print("Encoder 2: ");
-               Serial.println((long int)encoder2Count);
+             //TODO: itoa(encoderCounts[0],buffer,10);
+               if(Serial.parseInt() == -1)
+               {
+                itoa(encoderCounts[0],buffer,10);
+                Serial.println(buffer);
+                  
+                buffer_Flush(buffer,16);
+                
+                itoa(encoderCounts[1],buffer,10);
+                Serial.println(buffer);
+                buffer_Flush(buffer,16);
+               }else if(Serial.parseInt() == 0)
+               {
+                  itoa(encoderCounts[0],buffer,10);
+                Serial.println(buffer);
+                  
+                buffer_Flush(buffer,16);
+                
+                
+               }else if(Serial.parseInt() == 1)
+               {
+                itoa(encoderCounts[1],buffer,10);
+                Serial.println(buffer);
+                  
+                buffer_Flush(buffer,16);
+                
+                
+               }
+               
                Serial.read(); // eats the char return /r
-               //TODO: itoa(encoder1Count,buffer,10);
+               
+               
                 break;
 
             //solenoid
            case 'S':
             case 's':
+              while(Serial.available() <=0);
+              pickSolenoid = Serial.parseInt();
+              solenoidState  = Serial.parseInt();
+              digitalWrite(solenoid[pickSolenoid],solenoidState);
+              Serial.read();
                 break;
 
             //digital read
@@ -137,11 +213,11 @@ void loop()
 
                 if(motor == 'l' || motor == 'L')
                 {
-                  leftMotor.writeMicroseconds(ZEROPOINT + speed);
+                  servos[0].writeMicroseconds(ZEROPOINT + speed);
                 }
                 else if(motor == 'r' || motor == 'R')
                 {
-                  rightMotor.writeMicroseconds(ZEROPOINT + speed);
+                  servos[2].writeMicroseconds(ZEROPOINT + speed);
                 }
                 else
                 {
@@ -154,7 +230,8 @@ void loop()
         }
     }
     //TODO: Set up timer to interrupt every 10ms and determine velocity. Alternatively we can do this through the PID loop 
-    pid();
+    pid0();
+    pid1();
 }
 
 void encoder1A_ISR()
@@ -164,12 +241,12 @@ void encoder1A_ISR()
   {
     if(digitalRead(encoder[1]) == LOW)
     {
-      encoder1Count++;
+      encoderCounts[0]++;
       //Serial.println("cw");
     }
     else
     {
-      encoder1Count--;
+      encoderCounts[0]--;
       //Serial.println("ccw");
     }
   }
@@ -177,12 +254,12 @@ void encoder1A_ISR()
   {
     if(digitalRead(encoder[1]) == HIGH)
     {
-      encoder1Count++;
+      encoderCounts[0]++;
       //Serial.println("cw");
     }
     else
     {
-      encoder1Count--;
+      encoderCounts[0]--;
       //Serial.println("ccw");
     }
   }
@@ -196,12 +273,12 @@ void encoder1B_ISR()
   {
     if(digitalRead(encoder[0]) == HIGH)
     {
-      encoder1Count++;
+      encoderCounts[0]++;
       //Serial.println("cw");
     }
     else
     {
-      encoder1Count--;
+      encoderCounts[0]--;
     //Serial.println("ccw");
     }
   }
@@ -209,12 +286,12 @@ void encoder1B_ISR()
   {
     if(digitalRead(encoder[0]) == LOW)
     {
-      encoder1Count++;
+      encoderCounts[0]++;
       //Serial.println("cw");
     }
     else
     {
-      encoder1Count--;
+      encoderCounts[0]--;
       //Serial.println("ccw");
     }
   }
@@ -228,22 +305,22 @@ void encoder2A_ISR()
   {
     if(digitalRead(encoder[3]) == LOW)
     {
-      encoder2Count++;
+      encoderCounts[1]++;
     }
     else
     {
-      encoder2Count--;
+      encoderCounts[1]--;
     }
   }
   else
   {
     if(digitalRead(encoder[3]) == HIGH)
     {
-      encoder2Count++;
+      encoderCounts[1]++;
     }
     else
     {
-      encoder2Count--;
+      encoderCounts[1]--;
     }
   }
   interrupts();
@@ -256,22 +333,22 @@ void encoder2B_ISR()
   {
     if(digitalRead(encoder[2]) == HIGH)
     {
-      encoder2Count++;
+      encoderCounts[1]++;
     }
     else
     {
-      encoder2Count--;
+      encoderCounts[1]--;
     }
   }
   else
   {
     if(digitalRead(encoder[2]) == LOW)
     {
-      encoder2Count++;
+      encoderCounts[1]++;
     }
     else
     {
-      encoder2Count--;
+      encoderCounts[1]--;
     }
   }
   interrupts();
@@ -285,31 +362,87 @@ void buffer_Flush(char *ptr, int length)
   }
 }
 
-void pid() //TODO: set this up in a for loop and replace encodercount with an array
+void pid0()
 {
-  float p,i,d,err;
+  float p,i,d;
+  int term;
+
+  if(!pid_flag[0])
+  {
+    err[0] = encoderCounts[0];
+    pid_flag[0] = 1;
+    pid_time[0] = micros();
+  }
+  if(runTime - pid_time[0] >= DT)
+  {
+  err[0] -= encoderCounts[0]*(-1);
+  err[0] /= DT;
+  Serial.print(err[0]);
+  err[0] = sp[0] - err[0];
+  ierr[0] += err[0];
+  throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
+  prv[0] = kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
+  
+  
+    pid_flag[0] = 1;
+  }
+  runTime = micros();
+  
+}
+void pid1()
+{
+  float p,i,d;
+  int term;
+  if(!pid_flag[1])
+  {
+    err[1] = encoderCounts[1];
+    pid_flag[1] = 1;
+    pid_time[1] = micros();
+  }
+  if(runTime - pid_time[1] >= DT)
+  {
+   
+  
+  err[1] -= encoderCounts[1]*(-1);
+  err[1] /= DT;
+  err[1] = sp[1] - err[1];
+  ierr[1] += err[1];
+  throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
+  prv[1] = kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
+    pid_flag[1] = 1;
+  }
+  runTime = micros();
+   
+  
+}
+
+/*void pid() //TODO: set this up in a for loop and replace encodercount with an array
+{
+  
+  float p,i,d;
   int term;
   
-  err = encoder1Count;
+  err = encoderCounts[0];
   delay(DT);
-  err -= encoder1Count*(-1);
+  err -= encoderCounts[0]*(-1);
   err /= DT;
-
+  err = SP{0] - err;
   ierr[0] += err;
   throttle[0] += kp[0] * err + ki[0]*ierr[0] + kd[0]*((err - prv[0])/DT);
-  prv[0] = err;
+  prv[0] = kp[0] * err + ki[0]*ierr[0] + kd[0]*((err - prv[0])/DT);
   Serial.println(throttle[0]);
   
   //end PID for encoder 1; begin PID for encoder 2
 
-  err = encoder2Count;
+  err = encoderCounts[1];
   delay(DT);
-  err -= encoder2Count*(-1);
+  err -= encoderCounts[1]*(-1);
   err /= DT;
-
+  err = SP[1] - err;
   ierr[1] += err;
   throttle[1] += kp[1] * err + ki[1]*ierr[1] + kd[1]*((err - prv[1])/DT);
   prv[1] = err;
 }
+*/
 
 
