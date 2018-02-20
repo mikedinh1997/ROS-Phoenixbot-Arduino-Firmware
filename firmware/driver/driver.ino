@@ -306,8 +306,7 @@ void buffer_Flush(char *ptr, int length)
 
 void pid0()
 {
-  float p,i,d;
-  int term;
+  float t;
 
   if(!pid_flag[0])
   {
@@ -317,17 +316,18 @@ void pid0()
     
   }
   
-  if(runTime - pid_time[0] >= DT)
+  if(micros() - pid_time[0] >= DT)
   {
+    t = (micros() - pid_time[0])*1000000; //convert t to seconds
     err[0] -= encoderCounts[0];
-    err[0] /= (runTime - pid_time[0]);
+    err[0] /= t;
     Serial.print(err[0]);
     err[0] = sp[0] - err[0];
     
     Serial.print(" ");
     Serial.println(sp[0]);
-    ierr[0] += err[0];
-    throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
+    ierr[0] += err[0]*t;
+    throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/t);
     if(throttle[0] >500)
     {
       throttle[0] = 500;
@@ -339,39 +339,38 @@ void pid0()
       
     }
 
-    prv[0] = kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
+    prv[0] = err[0];
   
   
     pid_flag[0] = 1;
     servos[0].writeMicroseconds(ZEROPOINT+throttle[0]);
   }
-  runTime = micros();
+  //runTime = micros();
   
 }
 void pid1()
 {
-  float p,i,d;
-  int term;
+  float t;
   if(!pid_flag[1])
   {
     err[1] = encoderCounts[1];
     pid_flag[1] = 1;
     pid_time[1] = micros();
   }
-  if(runTime - pid_time[1] >= DT)
+  if(micros() - pid_time[1] >= DT)
   {
-   
+    t = (micros() - pid_time[1])*1000000; //convert t to seconds
   
     err[1] -= encoderCounts[1];
-    err[1] /= (runTime-pid_time[1]);
+    err[1] /= t;
     err[1] = sp[1] - err[1];
-    ierr[1] += err[1];
-    throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
-    prv[1] = kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
+    ierr[1] += err[1]*t;
+    throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
+    prv[1] = err[1];
     pid_flag[1] = 1;
-     servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
+    servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
   }
-  runTime = micros();
+  //runTime = micros();
    
   
 }
