@@ -1,6 +1,6 @@
 #include <Servo.h>
 #define ZEROPOINT 1500
-#define DT 10000 //milliseconds
+#define DT 10000 //microseconds
 
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
@@ -23,9 +23,9 @@ int throttle[] = {0,0}; //counts per second; error correction after running PID
 float ierr[] = {0,0}; //elapsed error
 uint32_t runTime = 0; //how long since the program started
 float err[] = {0,0}; 
-float sp[] = {0,0}; ///PID Set Point/////
+float sp[] = {5500,0}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
-uint32_t pid_time[] = {0,0}; //time elapsed since our last PID routine
+uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
 
 void setup()
 {
@@ -314,18 +314,36 @@ void pid0()
     err[0] = encoderCounts[0];
     pid_flag[0] = 1;
     pid_time[0] = micros();
+    
   }
+  
   if(runTime - pid_time[0] >= DT)
   {
-    err[0] -= encoderCounts[0]*(-1);
-    err[0] /= DT;
+    err[0] -= encoderCounts[0];
+    err[0] /= (runTime - pid_time[0]);
+    Serial.print(err[0]);
     err[0] = sp[0] - err[0];
+    
+    Serial.print(" ");
+    Serial.println(sp[0]);
     ierr[0] += err[0];
     throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
+    if(throttle[0] >500)
+    {
+      throttle[0] = 500;
+      
+    }
+     if(throttle[0] <-500)
+    {
+      throttle[0] = -500;
+      
+    }
+
     prv[0] = kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/DT);
   
   
     pid_flag[0] = 1;
+    servos[0].writeMicroseconds(ZEROPOINT+throttle[0]);
   }
   runTime = micros();
   
@@ -344,13 +362,14 @@ void pid1()
   {
    
   
-    err[1] -= encoderCounts[1]*(-1);
-    err[1] /= DT;
+    err[1] -= encoderCounts[1];
+    err[1] /= (runTime-pid_time[1]);
     err[1] = sp[1] - err[1];
     ierr[1] += err[1];
     throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
     prv[1] = kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/DT);
     pid_flag[1] = 1;
+     servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
   }
   runTime = micros();
    
