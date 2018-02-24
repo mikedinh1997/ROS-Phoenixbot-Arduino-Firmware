@@ -5,6 +5,8 @@
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
 const char solenoid[] = {23,25,27,29,31,33};
+const char analog[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
+const char digital[] = {};
 Servo servos[6];
 //const char digital[30]; //todo: find out which DIO are free
 
@@ -75,6 +77,12 @@ void loop()
         switch(command)
         {
           //command e.g. PID control - c pidInput pidValue (pidInput can be P, D, I, or S (setpoint))
+            case 'A':
+            case 'a':
+              int pinNum;
+              pinNum = (int)Serial.parseInt();
+              Serial.read();//read \r
+              Serial.println(analogRead(analog[pinNum]));
             case 'C':
             case 'c':
               while(Serial.available() <= 0);
@@ -150,6 +158,10 @@ void loop()
             //digital read
               case 'D':
               case 'd':
+                int pinNumber;
+                pinNumber = (int)Serial.parseInt();
+                Serial.read();//read \r
+                Serial.println(digitalRead(digital[pinNumber]));
               break;
 
             //motor
