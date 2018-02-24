@@ -17,7 +17,7 @@ char buffer[5];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
-float kp[] = {0.01,0.01};
+float kp[] = {0.01,0};
 float ki[] = {0,0};
 float kd[] = {0,0};
 int prv[] = {0,0}; //previous error from PID
@@ -328,10 +328,12 @@ void pid0()
     
   }
   
-  if(micros() - pid_time[0] >= DT)
+  if((micros() - pid_time[0]) >= DT)
   {
-    t = (micros() - pid_time[0])*1000000; //convert t to seconds
-    err[0] -= encoderCounts[0];
+    t = ((float)(micros() - pid_time[0]))/1000000.0; //convert t to seconds
+    //Serial.print(t);
+    //Serial.print(" ");
+    err[0] = encoderCounts[0] - err[0];
     err[0] /= t;
     Serial.print(err[0]);
     err[0] = sp[0] - err[0];
@@ -353,8 +355,9 @@ void pid0()
 
     prv[0] = err[0];
   
-  
-    pid_flag[0] = 1;
+    Serial.print("Throttle: ");
+    Serial.println(throttle[0]);
+    pid_flag[0] = 0;
     servos[0].writeMicroseconds(ZEROPOINT+throttle[0]);
   }
   //runTime = micros();
@@ -371,15 +374,24 @@ void pid1()
   }
   if(micros() - pid_time[1] >= DT)
   {
-    t = (micros() - pid_time[1])*1000000; //convert t to seconds
+    t = ((float)(micros() - pid_time[1]))/1000000.0; //convert t to seconds
   
-    err[1] -= encoderCounts[1];
+    err[1] = err[1] - encoderCounts[1];
     err[1] /= t;
     err[1] = sp[1] - err[1];
     ierr[1] += err[1]*t;
     throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
     prv[1] = err[1];
-    pid_flag[1] = 1;
+    pid_flag[1] = 0;
+
+    if(throttle[1] > 500)
+    {
+      throttle[1] = 500;
+    }
+    if(throttle[1] < -500)
+    {
+      throttle[1] = -500;
+    }
     servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
   }
   //runTime = micros();
