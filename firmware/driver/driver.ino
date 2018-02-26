@@ -54,6 +54,7 @@ void setup()
     servos[13-i].attach(i);
   
   }
+  delay(10000); //10 second delay for synchronizing with Octave. Remove after PID loop is tuned.
 }
 
 void loop()
@@ -335,11 +336,12 @@ void pid0()
     //Serial.print(" ");
     err[0] = encoderCounts[0] - err[0];
     err[0] /= t;
-    Serial.print(err[0]);
+    byte* bytes = (byte*) &err[0];
+    Serial.write(bytes,4);
     err[0] = sp[0] - err[0];
     
-    Serial.print(" ");
-    Serial.println(sp[0]);
+    //Serial.print(" ");
+    //Serial.println(sp[0]);
     ierr[0] += err[0]*t;
     throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/t);
     if(throttle[0] >500)
@@ -355,8 +357,8 @@ void pid0()
 
     prv[0] = err[0];
   
-    Serial.print("Throttle: ");
-    Serial.println(throttle[0]);
+    //Serial.print("Throttle: ");
+    //Serial.println(throttle[0]);
     pid_flag[0] = 0;
     servos[0].writeMicroseconds(ZEROPOINT+throttle[0]);
   }
@@ -379,6 +381,8 @@ void pid1()
     err[1] = err[1] - encoderCounts[1];
     err[1] /= t;
     err[1] = sp[1] - err[1];
+    byte* bytes = (byte*) &err[1];
+    //Serial.write(bytes,4);
     ierr[1] += err[1]*t;
     throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
     prv[1] = err[1];
