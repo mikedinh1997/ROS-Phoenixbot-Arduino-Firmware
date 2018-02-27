@@ -133,7 +133,7 @@ void loop()
                  
                }else if(Serial.parseInt() == 0)
                {
-                 itoa([0],buffer,10);
+                 itoa(encoderCounts[0],buffer,10);
                  buffer_Flush(buffer,16);
                 
                }else if(Serial.parseInt() == 1)
