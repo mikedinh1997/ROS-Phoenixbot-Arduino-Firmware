@@ -2,7 +2,7 @@ pkg load instrument-control
 
 clear all
 
-s1 = serial("COM4", 115200);
+s1 = serial("COM3", 115200);
 set(s1, 'timeout', -1);
 srl_flush(s1);
 

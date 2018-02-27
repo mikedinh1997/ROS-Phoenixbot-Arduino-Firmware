@@ -17,15 +17,15 @@ char buffer[5];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
-float kp[] = {0.01,0};
+float kp[] = {0.02175,0.01};
 float ki[] = {0,0};
-float kd[] = {0,0};
+float kd[] = {0.000451,0.0};
 int prv[] = {0,0}; //previous error from PID
 int throttle[] = {0,0}; //counts per second; error correction after running PID
 float ierr[] = {0,0}; //elapsed error
 uint32_t runTime = 0; //how long since the program started
 float err[] = {0,0}; 
-float sp[] = {5500,0}; ///PID Set Point/////
+float sp[] = {2750,0}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
 uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
 
@@ -54,7 +54,7 @@ void setup()
     servos[13-i].attach(i);
   
   }
-  delay(10000); //10 second delay for synchronizing with Octave. Remove after PID loop is tuned.
+  //delay(10000); //10 second delay for synchronizing with Octave. Remove after PID loop is tuned.
 }
 
 void loop()
@@ -337,13 +337,48 @@ void pid0()
     err[0] = encoderCounts[0] - err[0];
     err[0] /= t;
     byte* bytes = (byte*) &err[0];
-    Serial.write(bytes,4);
+
+    Serial.print(8000.0);
+    Serial.print(" ");
+    Serial.print(sp[0]+250);
+    Serial.print(" ");
+    Serial.print(sp[0]-250);
+    Serial.print(" ");
+    Serial.print(0.0);
+    Serial.print(" ");
+    Serial.print(err[0]);
+    Serial.print(" ");
+    Serial.println(sp[0]);
     err[0] = sp[0] - err[0];
-    
-    //Serial.print(" ");
-    //Serial.println(sp[0]);
+
+   
     ierr[0] += err[0]*t;
-    throttle[0] += kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/t);
+    float output;
+    
+    output = kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/t);
+    if(output > 10)
+    {
+      output = 10;
+      
+    }
+    if(output < -10)
+    {
+      output = -10;
+      
+    }
+    throttle[0] += output;
+    
+   // Serial.print(8000.0);
+    //Serial.print(" ");
+   // Serial.print(sp[0]+250);
+   /* Serial.print(" ");
+    Serial.print(sp[0]-250);
+    Serial.print(" ");
+    Serial.print(0.0);
+   */ //Serial.print(" ");
+  //  Serial.println(output);
+    //Serial.print(" ");
+   // Serial.println(sp[0]);
     if(throttle[0] >500)
     {
       throttle[0] = 500;
@@ -368,6 +403,7 @@ void pid0()
 void pid1()
 {
   float t;
+  float output;
   if(!pid_flag[1])
   {
     err[1] = encoderCounts[1];
@@ -380,11 +416,36 @@ void pid1()
   
     err[1] = err[1] - encoderCounts[1];
     err[1] /= t;
-    err[1] = sp[1] - err[1];
+   
     byte* bytes = (byte*) &err[1];
     //Serial.write(bytes,4);
+     Serial.print(8000.0);
+    Serial.print(" ");
+    Serial.print(sp[1]+250);
+    Serial.print(" ");
+    Serial.print(sp[1]-250);
+    Serial.print(" ");
+    Serial.print(0.0);
+    Serial.print(" ");
+    Serial.print(err[1]);
+    Serial.print(" ");
+    Serial.println(sp[1]);
+     err[1] = sp[1] - err[1];
     ierr[1] += err[1]*t;
-    throttle[1] += kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
+    
+    output = kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
+    if(output > 10)
+    {
+      output = 10;
+      
+    }
+    if(output < -10)
+    {
+      output = -10;
+      
+    }
+    throttle[1] += output;
+    
     prv[1] = err[1];
     pid_flag[1] = 0;
 
