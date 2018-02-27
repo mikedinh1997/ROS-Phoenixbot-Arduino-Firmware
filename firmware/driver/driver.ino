@@ -321,6 +321,13 @@ void pid0()
 {
   float t;
 
+  /*  The pid_flag variable is used to tell us our PID loop has recorded an initial sample.
+   *  Since to calculate velocity we need two readings (read, wait, read), this flag lets us
+   *  know that the first reading has happened so we can wait for a second reading before
+   *  calculating the PID loop output.
+   *  
+   *  The time at which this reading is recorded so we can make accurate calculations later.
+   */
   if(!pid_flag[0])
   {
     err[0] = encoderCounts[0];
@@ -328,15 +335,20 @@ void pid0()
     pid_time[0] = micros();
     
   }
-  
+
+  /*  We must check if enough time has passed since our initial reading for us to take another.
+   *  Since it may have taken more than DT microseconds to run this loop again (interrupt stalls,
+   *  serial parsing, etc. can slow it down.) we check if the difference between the current
+   *  runtime and our pid_time sample are greater than the DT we need.
+   * 
+   */
   if((micros() - pid_time[0]) >= DT)
   {
-    t = ((float)(micros() - pid_time[0]))/1000000.0; //convert t to seconds
+    t = ((float)(micros() - pid_time[0]))/1000000.0; //compute time in seconds
     //Serial.print(t);
     //Serial.print(" ");
-    err[0] = encoderCounts[0] - err[0];
-    err[0] /= t;
-    byte* bytes = (byte*) &err[0];
+    err[0] = encoderCounts[0] - err[0]; //find difference in counts (ie. calculate change in position)
+    err[0] /= t; //find velocity by dividing by change in time (ie. compute derivative of position)
 
     /*Serial.print(8000.0);
     Serial.print(" ");
@@ -350,13 +362,27 @@ void pid0()
     Serial.print(" ");
     Serial.println(sp[0]);
     */
-    err[0] = sp[0] - err[0];
+    err[0] = sp[0] - err[0]; //find error by seeing how far away from setpoint we are
 
    
-    ierr[0] += err[0]*t;
+    ierr[0] += err[0]*t; //integral error
     float output;
-    
+
+    /* Compute PID loop output
+     * The output of a PID loop is the sum of it's errors compensated for by the 
+     * chosen coefficients.
+     * 
+     * P term: controls how quickly you approach the set point
+     * I term: controls how far above or below the setpoint you oscillate
+     * D term: controls how much oscillation is allowed
+     */
     output = kp[0] * err[0] + ki[0]*ierr[0] + kd[0]*((err[0] - prv[0])/t);
+
+    /*  Clamp the output
+     *  The output can not be allowed to change too sharply so the PID response
+     *  is clamped. This slows the rate of change but prevents sharp or jittery
+     *  responses when set points change or load changes.
+     */
     if(output > 10)
     {
       output = 10;
@@ -367,19 +393,14 @@ void pid0()
       output = -10;
       
     }
-    throttle[0] += output;
+
+    throttle[0] += output; //adjust throttle with PID output
     
-   // Serial.print(8000.0);
-    //Serial.print(" ");
-   // Serial.print(sp[0]+250);
-   /* Serial.print(" ");
-    Serial.print(sp[0]-250);
-    Serial.print(" ");
-    Serial.print(0.0);
-   */ //Serial.print(" ");
-  //  Serial.println(output);
-    //Serial.print(" ");
-   // Serial.println(sp[0]);
+    /*  Clamp throttle
+     *  Throttle is what we use to change in units from counts/sec to pulse
+     *  width in microseconds for the ESC control signal. Some precision is lost
+     *  since we change to integer but this can not be avoided.
+     */
     if(throttle[0] >500)
     {
       throttle[0] = 500;
@@ -391,14 +412,10 @@ void pid0()
       
     }
 
-    prv[0] = err[0];
-  
-    //Serial.print("Throttle: ");
-    //Serial.println(throttle[0]);
-    pid_flag[0] = 0;
-    servos[0].writeMicroseconds(ZEROPOINT+throttle[0]);
+    prv[0] = err[0]; //save previous error for use in next iteration.
+    pid_flag[0] = 0; //reset PID flag
+    servos[0].writeMicroseconds(ZEROPOINT+throttle[0]); //update motor output
   }
-  //runTime = micros();
   
 }
 void pid1()
@@ -418,9 +435,7 @@ void pid1()
     err[1] = encoderCounts[1] - err[1];
     err[1] /= t;
    
-    byte* bytes = (byte*) &err[1];
-    //Serial.write(bytes,4);
-     Serial.print(8000.0);
+    Serial.print(8000.0);
     Serial.print(" ");
     Serial.print(sp[1]+250);
     Serial.print(" ");
@@ -460,7 +475,6 @@ void pid1()
     }
     servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
   }
-  //runTime = micros();
    
   
 }
