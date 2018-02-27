@@ -112,12 +112,12 @@ void loop()
             Serial.read();
             break; 
            
-            //pwm
+            //Pulse Width Modulation (PWM)
             case 'P':
             case 'p':
-              id = (int)Serial.parseInt();
-              value = (int)Serial.parseInt();
-              analogWrite(pwm[id], value);
+              id = (int)Serial.parseInt(); //Read in int
+              value = (int)Serial.parseInt(); //Read in second int
+              analogWrite(pwm[id], value); // Write the value to the pin
               Serial.read(); //Read out extra \r
             break;
            
@@ -126,14 +126,14 @@ void loop()
             case 'e':
                if(Serial.parseInt() == -1)
                {
-                 itoa(encoderCounts[0],buffer,10);
-                 buffer_Flush(buffer,16);
+                 itoa(encoderCounts[0],buffer,10); // integer to string
+                 buffer_Flush(buffer,16);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
                  buffer_Flush(buffer,16);
                  
                }else if(Serial.parseInt() == 0)
                {
-                 itoa(encoderCounts[0],buffer,10);
+                 itoa([0],buffer,10);
                  buffer_Flush(buffer,16);
                 
                }else if(Serial.parseInt() == 1)
