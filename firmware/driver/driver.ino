@@ -17,15 +17,15 @@ char buffer[5];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
-float kp[] = {0.02175,0.01};
+float kp[] = {0.02175,0.02175};
 float ki[] = {0,0};
-float kd[] = {0.000451,0.0};
+float kd[] = {0.000451,0.000451};
 int prv[] = {0,0}; //previous error from PID
 int throttle[] = {0,0}; //counts per second; error correction after running PID
 float ierr[] = {0,0}; //elapsed error
 uint32_t runTime = 0; //how long since the program started
 float err[] = {0,0}; 
-float sp[] = {2750,0}; ///PID Set Point/////
+float sp[] = {2750,2750}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
 uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
 
@@ -338,7 +338,7 @@ void pid0()
     err[0] /= t;
     byte* bytes = (byte*) &err[0];
 
-    Serial.print(8000.0);
+    /*Serial.print(8000.0);
     Serial.print(" ");
     Serial.print(sp[0]+250);
     Serial.print(" ");
@@ -349,6 +349,7 @@ void pid0()
     Serial.print(err[0]);
     Serial.print(" ");
     Serial.println(sp[0]);
+    */
     err[0] = sp[0] - err[0];
 
    
