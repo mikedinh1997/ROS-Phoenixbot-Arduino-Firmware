@@ -414,7 +414,7 @@ void pid1()
   {
     t = ((float)(micros() - pid_time[1]))/1000000.0; //convert t to seconds
   
-    err[1] = err[1] - encoderCounts[1];
+    err[1] = encoderCounts[1] - err[1];
     err[1] /= t;
    
     byte* bytes = (byte*) &err[1];
