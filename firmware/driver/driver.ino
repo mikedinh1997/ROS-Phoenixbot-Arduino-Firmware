@@ -49,7 +49,7 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(encoder[2]), encoder2A_ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoder[3]), encoder2B_ISR, CHANGE);
 
-  for(int i = 13; i > 6; i--)
+  for(int i = 13; i > 7; i--)
   {
     servos[13-i].attach(i);
   
