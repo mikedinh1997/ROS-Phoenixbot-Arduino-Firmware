@@ -13,7 +13,7 @@ Servo servos[6];
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
 
-char buffer[16];
+char buffer[26];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
