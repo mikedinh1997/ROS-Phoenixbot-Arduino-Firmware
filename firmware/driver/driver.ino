@@ -13,7 +13,7 @@ Servo servos[6];
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
 
-char buffer[5];
+char buffer[16];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
@@ -127,18 +127,22 @@ void loop()
                if(Serial.parseInt() == -1)
                {
                  itoa(encoderCounts[0],buffer,10); // integer to string
+                 Serial.println(buffer);
                  buffer_Flush(buffer,16);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
+                 Serial.println(buffer);
                  buffer_Flush(buffer,16);
                  
                }else if(Serial.parseInt() == 0)
                {
                  itoa(encoderCounts[0],buffer,10);
+                 Serial.println(buffer);
                  buffer_Flush(buffer,16);
                 
                }else if(Serial.parseInt() == 1)
                {
                  itoa(encoderCounts[1],buffer,10);
+                 Serial.println(buffer);
                  buffer_Flush(buffer,16);
                }
                
