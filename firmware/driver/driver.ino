@@ -128,22 +128,22 @@ void loop()
                {
                  itoa(encoderCounts[0],buffer,10); // integer to string
                  Serial.println(buffer);
-                 buffer_Flush(buffer,16);          // 0 out everything in buffer
+                 buffer_Flush(buffer,26);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,16);
+                 buffer_Flush(buffer,26);
                  
                }else if(Serial.parseInt() == 0)
                {
                  itoa(encoderCounts[0],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,16);
+                 buffer_Flush(buffer,26);
                 
                }else if(Serial.parseInt() == 1)
                {
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,16);
+                 buffer_Flush(buffer,26);
                }
                
                Serial.read(); // eats the char return /r
