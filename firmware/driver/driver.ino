@@ -1,14 +1,12 @@
 #include <Servo.h>
 #define ZEROPOINT 1500
-#define DT 10000 //microseconds
 
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
-const char solenoid[] = {23,25,27,29,31,33};
+const char solenoid[] = {43,44,45,46,47,48};
 const char analog[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
-const char digital[] = {};
+const char digital[] = {22,23,24,25,26,27,28,29,30,31,32,33,34,35,36};
 Servo servos[6];
-//const char digital[30]; //todo: find out which DIO are free
 
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
@@ -23,26 +21,27 @@ float kd[] = {0.000451,0.000451};
 int prv[] = {0,0}; //previous error from PID
 int throttle[] = {0,0}; //counts per second; error correction after running PID
 float ierr[] = {0,0}; //elapsed error
-uint32_t runTime = 0; //how long since the program started
 float err[] = {0,0}; 
 float sp[] = {2750,2750}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
 uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
+uint32_t DT = 10000; //microseconds to wait before performing PID iteration.
 
 void setup()
 {
   Serial.begin(115200);
-  delay(10);
+  while(!Serial); //wait for UART to initialize.
   Serial.println("Beep boop, I am a robot.");
 
-  for(char i = 0; i < 30; i++)
+  for(char i = 22; i < 36; i++)
   {
-  //  pinMode(digital[i], INPUT);
+    pinMode(i, INPUT);
   }
 
-  pinMode(solenoid[0], OUTPUT);
-  pinMode(solenoid[1], OUTPUT);
-  pinMode(solenoid[2], OUTPUT);
+  for(char i = 43; i < 48; i++)
+  {
+    pinMode(i, OUTPUT);
+  }
 
   attachInterrupt(digitalPinToInterrupt(encoder[0]), encoder1A_ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoder[1]), encoder1B_ISR, CHANGE);
@@ -54,7 +53,6 @@ void setup()
     servos[13-i].attach(i);
   
   }
-  //delay(10000); //10 second delay for synchronizing with Octave. Remove after PID loop is tuned.
 }
 
 void loop()
@@ -107,6 +105,10 @@ void loop()
               }else if(pidInput == 'S' || pidInput == 's')
               {
                 sp[pidMotor] =  pidValue;
+              }
+              else if(pidInput == 'T' || pidInput == 't')
+              {
+                DT = (uint32_t)Serial.parseInt();
               }
             
             Serial.read();
@@ -177,19 +179,45 @@ void loop()
               motor = Serial.read();
               speed = (int)Serial.parseInt();
               
-                if(motor == 'l' || motor == 'L')
+                if(motor == '0')
                 {
                   servos[0].writeMicroseconds(ZEROPOINT + speed);
                 }
-                else if(motor == 'r' || motor == 'R')
+                else if(motor == '1')
                 {
-                  servos[2].writeMicroseconds(ZEROPOINT + speed);
+                  servos[1].writeMicroseconds(ZEROPOINT + speed);
                 }
-                else
+                else if(motor == '2');
                 {
-                  Serial.println("Error with motor input");
+                  servos[2].writeMicroseconds(ZEROPOINT + speed);                    
+                }
+                else if(motor == '3');
+                {
+                  servos[3].writeMicroseconds(ZEROPOINT + speed);                    
+                }
+                else if(motor == '4');
+                {
+                  servos[4].writeMicroseconds(ZEROPOINT + speed);                    
+                }
+                else if(motor == '5');
+                {
+                  servos[5].writeMicroseconds(ZEROPOINT + speed);                    
                 }
                Serial.read(); //Read out extra \r
+               break;
+
+               //Immediately stop the robot and reset PID
+               case 'H':
+               case 'h':
+
+               iterm[0] = 0;
+               iterm[1] = 0;
+               sp[0] = 0;
+               sp[1] = 0;
+               servos[0].write(ZEROPOINT);
+               servos[1].write(ZEROPOINT);
+               Serial.read(); //Read out extra \r
+
                break;
                
             default:
