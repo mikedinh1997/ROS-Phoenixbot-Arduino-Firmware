@@ -3,7 +3,7 @@
 
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
-const char solenoid[] = {43,44,45,46,47,48};
+const char solenoid[] = {39,40,41,42,43,44};
 const char analog[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
 const char digital[] = {22,23,24,25,26,27,28,29,30,31,32,33,34,35,36};
 Servo servos[6];
@@ -38,7 +38,7 @@ void setup()
     pinMode(i, INPUT);
   }
 
-  for(char i = 43; i < 48; i++)
+  for(char i = 39; i < 45; i++)
   {
     pinMode(i, OUTPUT);
   }
@@ -187,19 +187,19 @@ void loop()
                 {
                   servos[1].writeMicroseconds(ZEROPOINT + speed);
                 }
-                else if(motor == '2');
+                else if(motor == '2')
                 {
                   servos[2].writeMicroseconds(ZEROPOINT + speed);                    
                 }
-                else if(motor == '3');
+               else if(motor == '3')
                 {
                   servos[3].writeMicroseconds(ZEROPOINT + speed);                    
                 }
-                else if(motor == '4');
+                else if(motor == '4')
                 {
                   servos[4].writeMicroseconds(ZEROPOINT + speed);                    
                 }
-                else if(motor == '5');
+                else if(motor == '5')
                 {
                   servos[5].writeMicroseconds(ZEROPOINT + speed);                    
                 }
@@ -210,8 +210,8 @@ void loop()
                case 'H':
                case 'h':
 
-               iterm[0] = 0;
-               iterm[1] = 0;
+               ierr[0] = 0;
+               ierr[1] = 0;
                sp[0] = 0;
                sp[1] = 0;
                servos[0].write(ZEROPOINT);
@@ -467,7 +467,7 @@ void pid1()
     err[1] = encoderCounts[1] - err[1];
     err[1] /= t;
    
-    Serial.print(8000.0);
+    /*Serial.print(8000.0);
     Serial.print(" ");
     Serial.print(sp[1]+250);
     Serial.print(" ");
@@ -477,7 +477,7 @@ void pid1()
     Serial.print(" ");
     Serial.print(err[1]);
     Serial.print(" ");
-    Serial.println(sp[1]);
+    Serial.println(sp[1]);*/
      err[1] = sp[1] - err[1];
     ierr[1] += err[1]*t;
     
