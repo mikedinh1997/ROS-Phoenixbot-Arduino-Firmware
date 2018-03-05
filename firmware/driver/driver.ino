@@ -1,5 +1,6 @@
 #include <Servo.h>
 #define ZEROPOINT 1500
+#define BUFF_SIZE 64
 
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
@@ -11,7 +12,7 @@ Servo servos[6];
 //A1,B1,A2,B2
 const char encoder[4] = {18,19,20,21};
 
-char buffer[26];
+char buffer[BUFF_SIZE];
 volatile int64_t encoderCounts[] = {0,0};
 
 //PID vars
@@ -22,10 +23,12 @@ int prv[] = {0,0}; //previous error from PID
 int throttle[] = {0,0}; //counts per second; error correction after running PID
 float ierr[] = {0,0}; //elapsed error
 float err[] = {0,0}; 
-float sp[] = {2750,2750}; ///PID Set Point/////
+float sp[] = {0,0}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
 uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
 uint32_t DT = 10000; //microseconds to wait before performing PID iteration.
+
+char halt_flag = 0;
 
 void setup()
 {
@@ -61,7 +64,7 @@ void loop()
 
     if((command = Serial.read()) >= 0)
     {
-        while(Serial.available() <= 0);
+        while(Serial.available() < 1);
         Serial.read(); //readout space
         int id;
         int value;
@@ -70,25 +73,33 @@ void loop()
         char solenoidState = 0;
         char pidMotor = 0;
         char pidInput = 0;
-        char pidValue = 0;
+        float pidValue = 0;
         int speed;
         
         switch(command)
         {
-          //command e.g. PID control - c pidInput pidValue (pidInput can be P, D, I, or S (setpoint))
             case 'A':
             case 'a':
               int pinNum;
+              while(Serial.available() < 2);
               pinNum = (int)Serial.parseInt();
               Serial.read();//read \r
               Serial.println(analogRead(analog[pinNum]));
+              break;
             case 'C':
             case 'c':
-              while(Serial.available() <= 0);
+            //command e.g. PID control - c motorNum pidInput pidValue (pidInput can be P, D, I, or S (setpoint))
+              while(Serial.available() < 5);
               pidMotor = Serial.parseInt();
               Serial.read();
               pidInput = Serial.read();   
-              pidValue = (pidInput == 's' || pidInput == 'S') ? Serial.parseFloat() :Serial.parseInt();
+              pidValue = Serial.parseFloat();
+              
+                /*Serial.write(pidMotor);
+                Serial.print(" ");
+                Serial.print(pidInput);
+                Serial.print(" ");
+                Serial.println(pidValue);*/
 
               if(pidInput == 'p' || pidInput == 'P')
               {
@@ -104,11 +115,12 @@ void loop()
               
               }else if(pidInput == 'S' || pidInput == 's')
               {
+                //Serial.println("Updating setpoint.");
                 sp[pidMotor] =  pidValue;
               }
               else if(pidInput == 'T' || pidInput == 't')
               {
-                DT = (uint32_t)Serial.parseInt();
+                DT = (uint32_t)pidValue;
               }
             
             Serial.read();
@@ -117,6 +129,8 @@ void loop()
             //Pulse Width Modulation (PWM)
             case 'P':
             case 'p':
+            
+              while(Serial.available() < 3);
               id = (int)Serial.parseInt(); //Read in int
               value = (int)Serial.parseInt(); //Read in second int
               analogWrite(pwm[id], value); // Write the value to the pin
@@ -126,26 +140,28 @@ void loop()
             //encoder: -1 reads both encoder values
             case 'E':
             case 'e':
+            
+              while(Serial.available() < 2);
                if(Serial.parseInt() == -1)
                {
                  itoa(encoderCounts[0],buffer,10); // integer to string
                  Serial.println(buffer);
-                 buffer_Flush(buffer,26);          // 0 out everything in buffer
+                 buffer_Flush(buffer);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,26);
+                 buffer_Flush(buffer);
                  
                }else if(Serial.parseInt() == 0)
                {
                  itoa(encoderCounts[0],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,26);
+                 buffer_Flush(buffer);
                 
                }else if(Serial.parseInt() == 1)
                {
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
-                 buffer_Flush(buffer,26);
+                 buffer_Flush(buffer);
                }
                
                Serial.read(); // eats the char return /r
@@ -155,7 +171,7 @@ void loop()
             //solenoid
               case 'S':
               case 's':
-                while(Serial.available() <=0);
+                while(Serial.available() < 3);
                 pickSolenoid = Serial.parseInt();
                 solenoidState  = Serial.parseInt();
                 digitalWrite(solenoid[pickSolenoid],solenoidState);
@@ -166,6 +182,8 @@ void loop()
               case 'D':
               case 'd':
                 int pinNumber;
+                
+                while(Serial.available() < 2);
                 pinNumber = (int)Serial.parseInt();
                 Serial.read();//read \r
                 Serial.println(digitalRead(digital[pinNumber]));
@@ -175,7 +193,7 @@ void loop()
               case 'M':
               case 'm':
 
-              while(Serial.available() <= 0);
+              while(Serial.available() < 3);
               motor = Serial.read();
               speed = (int)Serial.parseInt();
               
@@ -209,24 +227,33 @@ void loop()
                //Immediately stop the robot and reset PID
                case 'H':
                case 'h':
-
+              
+              while(Serial.available() < 1);
                ierr[0] = 0;
                ierr[1] = 0;
                sp[0] = 0;
                sp[1] = 0;
                servos[0].write(ZEROPOINT);
                servos[1].write(ZEROPOINT);
+               halt_flag = 1;
                Serial.read(); //Read out extra \r
 
                break;
                
             default:
                 Serial.println("Error, serial input incorrect  ");
+                while (Serial.available() > 0) 
+                {
+                  Serial.read();
+                }
         }
     }
     //TODO: Set up timer to interrupt every 10ms and determine velocity. Alternatively we can do this through the PID loop 
-    pid0();
-    pid1();
+    if(!halt_flag)
+    {
+      pid0();
+      pid1();
+    }
 }
 
 void encoder1A_ISR()
@@ -341,9 +368,9 @@ void encoder2B_ISR()
   interrupts();
 }
 
-void buffer_Flush(char *ptr, int length)
+void buffer_Flush(char *pt)
 {
-  for(int i = 0; i < length; i++)
+  for(int i = 0; i < BUFF_SIZE; i++)
   {
     ptr[i] = 0;
   }
@@ -447,9 +474,9 @@ void pid0()
     prv[0] = err[0]; //save previous error for use in next iteration.
     pid_flag[0] = 0; //reset PID flag
     servos[0].writeMicroseconds(ZEROPOINT+throttle[0]); //update motor output
-  }
-  
+  }  
 }
+
 void pid1()
 {
   float t;
@@ -506,9 +533,5 @@ void pid1()
       throttle[1] = -500;
     }
     servos[1].writeMicroseconds(ZEROPOINT+throttle[1]);
-  }
-   
-  
+  } 
 }
-
-
