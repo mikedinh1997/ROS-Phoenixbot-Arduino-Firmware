@@ -26,7 +26,10 @@ float err[] = {0,0};
 float sp[] = {0,0}; ///PID Set Point/////
 char pid_flag[] = {0,0}; //set this after running an immediate PID so we have a reference point
 uint32_t pid_time[] = {100000,100000}; //time elapsed since our last PID routine
-uint32_t DT = 10000; //microseconds to wait before performing PID iteration.
+uint32_t DT = 10000; //microseconds to wait before performing PID iteration
+float vel[] =  {0,0};
+uint64_t pos[] = {0,0};
+
 
 char halt_flag = 0;
 
@@ -145,22 +148,38 @@ void loop()
                if(Serial.parseInt() == -1)
                {
                  itoa(encoderCounts[0],buffer,10); // integer to string
-                 Serial.println(buffer);
+                 Serial.print(buffer);
+                 Serial.print(" ");
+                 Serial.print(pos[0]);
+                 Serial.print(" ");
+                 Serial.println(vel[0]);
                  buffer_Flush(buffer);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
+                 Serial.print(" ");
+                 Serial.print(pos[1]);
+                 Serial.print(" ");
+                 Serial.println(vel[1]);
                  buffer_Flush(buffer);
                  
                }else if(Serial.parseInt() == 0)
                {
                  itoa(encoderCounts[0],buffer,10);
                  Serial.println(buffer);
+                 Serial.print(" ");
+                 Serial.print(pos[0]);
+                 Serial.print(" ");
+                 Serial.println(vel[0]);
                  buffer_Flush(buffer);
                 
                }else if(Serial.parseInt() == 1)
                {
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
+                 Serial.print(" ");
+                 Serial.print(pos[1]);
+                 Serial.print(" ");
+                 Serial.println(vel[1]);
                  buffer_Flush(buffer);
                }
                
@@ -192,34 +211,36 @@ void loop()
             //motor
               case 'M':
               case 'm':
-
               while(Serial.available() < 3);
               motor = Serial.read();
               speed = (int)Serial.parseInt();
-              
-                if(motor == '0')
+
+                if(!halt_flag)
                 {
-                  servos[0].writeMicroseconds(ZEROPOINT + speed);
-                }
-                else if(motor == '1')
-                {
-                  servos[1].writeMicroseconds(ZEROPOINT + speed);
-                }
-                else if(motor == '2')
-                {
-                  servos[2].writeMicroseconds(ZEROPOINT + speed);                    
-                }
-               else if(motor == '3')
-                {
-                  servos[3].writeMicroseconds(ZEROPOINT + speed);                    
-                }
-                else if(motor == '4')
-                {
-                  servos[4].writeMicroseconds(ZEROPOINT + speed);                    
-                }
-                else if(motor == '5')
-                {
-                  servos[5].writeMicroseconds(ZEROPOINT + speed);                    
+                  if(motor == '0')
+                  {
+                    servos[0].writeMicroseconds(ZEROPOINT + speed);
+                  }
+                  else if(motor == '1')
+                  {
+                    servos[1].writeMicroseconds(ZEROPOINT + speed);
+                  }
+                  else if(motor == '2')
+                  {
+                    servos[2].writeMicroseconds(ZEROPOINT + speed);                    
+                  }
+                 else if(motor == '3')
+                  {
+                    servos[3].writeMicroseconds(ZEROPOINT + speed);                    
+                  }
+                  else if(motor == '4')
+                  {
+                    servos[4].writeMicroseconds(ZEROPOINT + speed);                    
+                  }
+                  else if(motor == '5')
+                  {
+                    servos[5].writeMicroseconds(ZEROPOINT + speed);                    
+                  }
                 }
                Serial.read(); //Read out extra \r
                break;
@@ -233,8 +254,12 @@ void loop()
                ierr[1] = 0;
                sp[0] = 0;
                sp[1] = 0;
-               servos[0].write(ZEROPOINT);
-               servos[1].write(ZEROPOINT);
+
+               for(char i = 0; i < 6; i++)
+               {
+                servos[i].writeMicroseconds(ZEROPOINT);
+               }
+               
                halt_flag = 1;
                Serial.read(); //Read out extra \r
 
@@ -407,8 +432,9 @@ void pid0()
     //Serial.print(t);
     //Serial.print(" ");
     err[0] = encoderCounts[0] - err[0]; //find difference in counts (ie. calculate change in position)
+    pos[0] = (uint64_t)err[0];
     err[0] /= t; //find velocity by dividing by change in time (ie. compute derivative of position)
-
+    vel[0] = err[0];
     /*Serial.print(8000.0);
     Serial.print(" ");
     Serial.print(sp[0]+250);
@@ -492,20 +518,11 @@ void pid1()
     t = ((float)(micros() - pid_time[1]))/1000000.0; //convert t to seconds
   
     err[1] = encoderCounts[1] - err[1];
+    pos[1] = (uint64_t)err[1];
     err[1] /= t;
-   
-    /*Serial.print(8000.0);
-    Serial.print(" ");
-    Serial.print(sp[1]+250);
-    Serial.print(" ");
-    Serial.print(sp[1]-250);
-    Serial.print(" ");
-    Serial.print(0.0);
-    Serial.print(" ");
-    Serial.print(err[1]);
-    Serial.print(" ");
-    Serial.println(sp[1]);*/
-     err[1] = sp[1] - err[1];
+    vel[1] = err[1];
+    
+    err[1] = sp[1] - err[1];
     ierr[1] += err[1]*t;
     
     output = kp[1] * err[1] + ki[1]*ierr[1] + kd[1]*((err[1] - prv[1])/t);
