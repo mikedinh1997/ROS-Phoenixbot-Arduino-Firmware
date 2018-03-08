@@ -491,7 +491,8 @@ void parseCommand()
              itoa(encoderCounts[0],tx_buffer,10); // integer to string
              Serial.print(tx_buffer);
              Serial.print(" ");
-             Serial.println(vel[0]);
+             Serial.print(vel[0]);
+             Serial.print(" ");
              buffer_Flush(tx_buffer);          // 0 out everything in buffer
              itoa(encoderCounts[1],tx_buffer,10);
              Serial.print(tx_buffer);
