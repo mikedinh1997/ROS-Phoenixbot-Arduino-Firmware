@@ -1,6 +1,7 @@
 #include <Servo.h>
 #define ZEROPOINT 1500
 #define BUFF_SIZE 64
+//#define DEBUG
 
 //drive 7 & 11, unused 12-13 & 44-46
 const char pwm[] = {2,3,4,5,6,7,11,12,13,44,45,46};
@@ -35,13 +36,13 @@ char halt_flag = 0;
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(1000000);
   while(!Serial); //wait for UART to initialize.
   Serial.println("Beep boop, I am a robot.");
 
   for(char i = 22; i < 36; i++)
   {
-    pinMode(i, INPUT);
+    pinMode(i, INPUT_PULLUP);
   }
 
   for(char i = 39; i < 45; i++)
@@ -378,10 +379,10 @@ void parseCommand()
 
     int id;
     int value;
-    char motor = 0;
-    char pickSolenoid = 0;
-    char solenoidState = 0;
-    char pidMotor = 0;
+    int motor = 0;
+    int pickSolenoid = 0;
+    int solenoidState = 0;
+    int pidMotor = 0;
     char pidInput = 0;
     float pidValue = 0;
     int speed;
@@ -390,15 +391,34 @@ void parseCommand()
     {
         case 'A':
         case 'a':
+
+        #ifdef DEBUG
+          Serial.println("A switch");
+        #endif
+          
           int pinNum;
           sscanf(&rcv_buffer[1], " %d\r", &pinNum);
           Serial.println(analogRead(analog[pinNum]));
           break;
         case 'C':
         case 'c':
+        
+        #ifdef DEBUG
+          Serial.println("C switch");
+          #endif 
+          
         //command e.g. PID control - c motorNum pidInput pidValue (pidInput can be P, D, I, or S (setpoint))
-          sscanf(&rcv_buffer[1], " %d %c %f\r", &pidMotor, &pidInput, &pidValue);
-
+          int32_t fixedPoint;
+          sscanf(&rcv_buffer[1], " %d %c %ld\r", &pidMotor, &pidInput, &fixedPoint);
+          pidValue = fixedPoint / 1000.0;
+          
+          #ifdef DEBUG 
+          Serial.println(pidMotor);
+          Serial.println(pidInput);
+          Serial.println(fixedPoint);
+          Serial.println(pidValue);
+          #endif
+          
           if(pidInput == 'p' || pidInput == 'P')
           {
              kp[pidMotor] = pidValue;
@@ -426,6 +446,11 @@ void parseCommand()
         //Pulse Width Modulation (PWM)
         case 'P':
         case 'p':
+
+          #ifdef DEBUG
+          Serial.println("P switch");
+          #endif
+           
           sscanf(&rcv_buffer[1], " %d %d\r", &id, &value);
           analogWrite(pwm[id], value); // Write the value to the pin
         break;
@@ -433,8 +458,13 @@ void parseCommand()
         //encoder: -1 reads both encoder values
         case 'E':
         case 'e':
-           char val;
-           sscanf(&rcv_buffer[1], " %c\r", &val);
+        
+          #ifdef DEBUG
+           Serial.println("E switch");
+           #endif
+           
+           int val;
+           sscanf(&rcv_buffer[1], " %d\r", &val);
            
            if(val == -1)
            {
@@ -444,7 +474,7 @@ void parseCommand()
              Serial.println(vel[0]);
              buffer_Flush(tx_buffer);          // 0 out everything in buffer
              itoa(encoderCounts[1],tx_buffer,10);
-             Serial.println(tx_buffer);
+             Serial.print(tx_buffer);
              Serial.print(" ");
              Serial.println(vel[1]);
              buffer_Flush(tx_buffer);
@@ -470,6 +500,11 @@ void parseCommand()
         //solenoid
           case 'S':
           case 's':
+          
+           #ifdef DEBUG
+            Serial.println("S switch");
+            #endif
+            
             sscanf(&rcv_buffer[1], " %d %d\r", &pickSolenoid, &solenoidState);
             digitalWrite(solenoid[pickSolenoid],solenoidState);
           break;
@@ -477,6 +512,11 @@ void parseCommand()
         //digital read
           case 'D':
           case 'd':
+          
+            #ifdef DEBUG
+            Serial.println("D switch");
+            #endif
+            
             int pinNumber;
             
             sscanf(&rcv_buffer[1], " %d\r", &pinNumber);
@@ -486,7 +526,12 @@ void parseCommand()
         //motor
           case 'M':
           case 'm':
-          sscanf(&rcv_buffer[1], " %c %d\r", &motor, &speed);
+          
+          #ifdef DEBUG
+          Serial.println("M switch");
+          #endif
+          
+          sscanf(&rcv_buffer[1], " %d %d\r", &motor, &speed);
 
           if(!halt_flag)
           {
@@ -520,8 +565,13 @@ void parseCommand()
            //Immediately stop the robot and reset PID
            case 'H':
            case 'h':
+
+           #ifdef DEBUG
+           Serial.println("H switch");
+           #endif
+           
            char state;
-           sscanf(&rcv_buffer[1], " %c\r", &halt_flag);
+           sscanf(&rcv_buffer[1], " %d\r", &halt_flag);
            ierr[0] = 0;
            ierr[1] = 0;
            sp[0] = 0;
