@@ -65,6 +65,7 @@ void setup()
 
 void loop()
 {
+    receiveBytes();
     if(!halt_flag)
     {
       pid0();
@@ -344,7 +345,7 @@ void pid1()
   } 
 }
 
-void receiveByte()
+void receiveBytes()
 {
   static byte index = 0;
   char terminator = '\r';
