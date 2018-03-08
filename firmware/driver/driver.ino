@@ -34,6 +34,26 @@ uint64_t pos[] = {0,0};
 char rcv_buffer[BUFF_SIZE];
 char halt_flag = 0;
 
+int simon_target = 0;
+
+void handleSimon() {
+  if(simon_target == 0) {
+    if(!digitalRead(digital[0])) {
+      servos[2].writeMicroseconds(ZEROPOINT + -300);
+    } else {
+      servos[2].writeMicroseconds(ZEROPOINT);
+    }
+  } else if(simon_target == 1) {
+    if(!digitalRead(digital[1])) {
+      servos[2].writeMicroseconds(ZEROPOINT + 40);
+    } else {
+      servos[2].writeMicroseconds(ZEROPOINT);
+    }
+  } else {
+    servos[2].writeMicroseconds(ZEROPOINT);
+  }
+}
+
 void setup()
 {
   Serial.begin(1000000);
@@ -582,6 +602,11 @@ void parseCommand()
             servos[i].writeMicroseconds(ZEROPOINT);
            }
 
+           break;
+          case 'N':
+          case 'n':
+             // while(Serial.available() < 2);
+             sscanf(&rcv_buffer[1], " %d\r", &simon_target);
            break;
            
         default:
