@@ -32,7 +32,7 @@ float vel[] =  {0,0};
 uint64_t pos[] = {0,0};
 
 char rcv_buffer[BUFF_SIZE];
-char halt_flag = 0;
+char halt_flag = 1;
 
 int simon_target = 0;
 
@@ -91,6 +91,7 @@ void loop()
     {
       pid0();
       pid1();
+      handleSimon();
     }
 }
 
@@ -399,7 +400,7 @@ void parseCommand()
 
     int id;
     int value;
-    int motor = 0;
+    char motor = 0;
     int pickSolenoid = 0;
     int solenoidState = 0;
     int pidMotor = 0;
@@ -533,14 +534,15 @@ void parseCommand()
         //digital read
           case 'D':
           case 'd':
-          
-            #ifdef DEBUG
-            Serial.println("D switch");
-            #endif
-            
             int pinNumber;
             
             sscanf(&rcv_buffer[1], " %d\r", &pinNumber);
+            
+            #ifdef DEBUG
+            Serial.println("D switch");
+            Serial.println(digital[pinNumber]);
+            #endif
+            
             Serial.println(digitalRead(digital[pinNumber]));
           break;
 
@@ -550,9 +552,11 @@ void parseCommand()
           
           #ifdef DEBUG
           Serial.println("M switch");
+          Serial.println(motor);
+          Serial.println(speed);
           #endif
           
-          sscanf(&rcv_buffer[1], " %d %d\r", &motor, &speed);
+          sscanf(&rcv_buffer[1], " %c %d\r", &motor, &speed);
 
           if(!halt_flag)
           {
