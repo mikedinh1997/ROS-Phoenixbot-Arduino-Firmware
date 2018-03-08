@@ -33,15 +33,35 @@ uint64_t pos[] = {0,0};
 
 char halt_flag = 0;
 
+char simon_target = 0;
+
+void handleSimon() {
+  if(simon_target == 0) {
+    if(!digitalRead(digital[0])) {
+      servos[2].writeMicroseconds(ZEROPOINT + -300);
+    } else {
+      servos[2].writeMicroseconds(ZEROPOINT);
+    }
+  } else if(simon_target == 1) {
+    if(!digitalRead(digital[1])) {
+      servos[2].writeMicroseconds(ZEROPOINT + 40);
+    } else {
+      servos[2].writeMicroseconds(ZEROPOINT);
+    }
+  } else {
+    servos[2].writeMicroseconds(ZEROPOINT);
+  }
+}
+
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(1000000);
   while(!Serial); //wait for UART to initialize.
   Serial.println("Beep boop, I am a robot.");
 
   for(char i = 22; i < 36; i++)
   {
-    pinMode(i, INPUT);
+    pinMode(i, INPUT_PULLUP);
   }
 
   for(char i = 39; i < 45; i++)
@@ -150,14 +170,14 @@ void loop()
                  itoa(encoderCounts[0],buffer,10); // integer to string
                  Serial.print(buffer);
                  Serial.print(" ");
-                 Serial.print(pos[0]);
+                 //Serial.print(pos[0]);
                  Serial.print(" ");
                  Serial.println(vel[0]);
                  buffer_Flush(buffer);          // 0 out everything in buffer
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
                  Serial.print(" ");
-                 Serial.print(pos[1]);
+                 //Serial.print(pos[1]);
                  Serial.print(" ");
                  Serial.println(vel[1]);
                  buffer_Flush(buffer);
@@ -167,7 +187,7 @@ void loop()
                  itoa(encoderCounts[0],buffer,10);
                  Serial.println(buffer);
                  Serial.print(" ");
-                 Serial.print(pos[0]);
+                 //Serial.print(pos[0]);
                  Serial.print(" ");
                  Serial.println(vel[0]);
                  buffer_Flush(buffer);
@@ -177,7 +197,7 @@ void loop()
                  itoa(encoderCounts[1],buffer,10);
                  Serial.println(buffer);
                  Serial.print(" ");
-                 Serial.print(pos[1]);
+                 //Serial.print(pos[1]);
                  Serial.print(" ");
                  Serial.println(vel[1]);
                  buffer_Flush(buffer);
@@ -264,6 +284,13 @@ void loop()
                Serial.read(); //Read out extra \r
 
                break;
+
+             case 'N':
+             case 'n':
+                while(Serial.available() < 2);
+                simon_target = Serial.parseInt();
+                Serial.read();
+                break;
                
             default:
                 Serial.println("Error, serial input incorrect  ");
@@ -278,6 +305,7 @@ void loop()
     {
       pid0();
       pid1();
+      handleSimon();
     }
 }
 
@@ -397,7 +425,7 @@ void buffer_Flush(char *pt)
 {
   for(int i = 0; i < BUFF_SIZE; i++)
   {
-    ptr[i] = 0;
+    pt[i] = 0;
   }
 }
 
