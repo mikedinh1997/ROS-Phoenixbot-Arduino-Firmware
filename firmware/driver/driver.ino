@@ -97,6 +97,10 @@ void loop()
       pid1();
       handleSimon();
     }
+    else
+    {
+      digitalWrite(solenoid[0], LOW);
+    }
 }
 
 void encoder1A_ISR()
