@@ -86,9 +86,10 @@ void setup()
 
 void loop()
 {
-    if(digitalRead(36) == 0)
+    if(digitalRead(digital[2]) == 0)
     {
       halt_flag = 1;
+      Serial.println("ESTOP!");
     }
     receiveBytes();
     if(!halt_flag)
