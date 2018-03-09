@@ -37,15 +37,15 @@ char halt_flag = 1;
 int simon_target = 0;
 
 void handleSimon() {
-  if(simon_target == 0) {
+  if(simon_target < 0) {
     if(!digitalRead(digital[0])) {
-      servos[2].writeMicroseconds(ZEROPOINT + -300);
+      servos[2].writeMicroseconds(ZEROPOINT + simon_target);
     } else {
       servos[2].writeMicroseconds(ZEROPOINT);
     }
-  } else if(simon_target == 1) {
+  } else if(simon_target > 0) {
     if(!digitalRead(digital[1])) {
-      servos[2].writeMicroseconds(ZEROPOINT + 40);
+      servos[2].writeMicroseconds(ZEROPOINT + simon_target);
     } else {
       servos[2].writeMicroseconds(ZEROPOINT);
     }
@@ -86,6 +86,10 @@ void setup()
 
 void loop()
 {
+    if(digitalRead(36) == 0)
+    {
+      halt_flag = 1;
+    }
     receiveBytes();
     if(!halt_flag)
     {
