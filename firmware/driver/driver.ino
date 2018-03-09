@@ -100,7 +100,16 @@ void loop()
     }
     else
     {
-      digitalWrite(solenoid[0], LOW);
+       ierr[0] = 0;
+       ierr[1] = 0;
+       sp[0] = 0;
+       sp[1] = 0;
+  
+       for(char i = 0; i < 6; i++)
+       {
+        servos[i].writeMicroseconds(ZEROPOINT);
+       }
+       digitalWrite(solenoid[0], LOW);
     }
 }
 
@@ -606,15 +615,6 @@ void parseCommand()
            
            char state;
            sscanf(&rcv_buffer[1], " %d\r", &halt_flag);
-           ierr[0] = 0;
-           ierr[1] = 0;
-           sp[0] = 0;
-           sp[1] = 0;
-
-           for(char i = 0; i < 6; i++)
-           {
-            servos[i].writeMicroseconds(ZEROPOINT);
-           }
 
            break;
           case 'N':
