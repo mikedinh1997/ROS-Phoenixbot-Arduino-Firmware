@@ -1,3 +1,3 @@
 # ROS-Phoenixbot-Arduino-Firmware
 
-Check wiki for Arduino Commands
+Check main PhoenixBot  wiki for Arduino Commands (https://github.com/SIUE-ARC/phoenixbot/wiki)
